@@ -1,0 +1,135 @@
+import sys
+import serial
+import serial.tools.list_ports
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                             QHBoxLayout, QGridLayout, QGroupBox, QLineEdit, 
+                             QLabel, QComboBox, QPushButton)
+from PyQt6.QtCore import Qt
+import pyqtgraph as pg
+
+class SignalSimulator(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Sensor Signal Simulator - UI Design")
+        self.resize(1200, 800)
+
+        # Main Layout
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QVBoxLayout(self.central_widget)
+
+        # --- UPPER HALF: DISPLAY ---
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('#0a0a0a')
+        self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
+        self.plot_widget.setLabel('left', 'Amplitude', units='V')
+        self.plot_widget.setLabel('bottom', 'Time', units='s')
+        
+        # Placeholder for the signal curve
+        self.curve = self.plot_widget.plot(pen=pg.mkPen(color='#00ffcc', width=1.5))
+        self.main_layout.addWidget(self.plot_widget, stretch=3)
+
+        # --- LOWER HALF: CONTROLS ---
+        self.controls_container = QHBoxLayout()
+
+        # Group 1: Signal Parameters (Text Boxes)
+        self.param_group = QGroupBox("Signal Parameters")
+        self.param_layout = QGridLayout()
+
+        self.param_layout.addWidget(QLabel("Waveform:"), 0, 0)
+        self.wave_type = QComboBox()
+        self.wave_type.addItems(["Sine", "Square", "Sawtooth", "Triangle"])
+        self.param_layout.addWidget(self.wave_type, 0, 1)
+
+        self.param_layout.addWidget(QLabel("Frequency (Hz):"), 1, 0)
+        self.freq_input = QLineEdit("10.0")
+        self.param_layout.addWidget(self.freq_input, 1, 1)
+
+        self.param_layout.addWidget(QLabel("Amplitude (V):"), 2, 0)
+        self.amp_input = QLineEdit("1.0")
+        self.param_layout.addWidget(self.amp_input, 2, 1)
+        
+        self.param_group.setLayout(self.param_layout)
+
+        # Group 2: Noise Settings (Text Boxes)
+        self.noise_group = QGroupBox("Noise Profile")
+        self.noise_layout = QGridLayout()
+
+        self.noise_layout.addWidget(QLabel("Noise Type:"), 0, 0)
+        self.noise_type = QComboBox()
+        self.noise_type.addItems(["Gaussian White", "Pink Noise", "Brownian", "None"])
+        self.noise_layout.addWidget(self.noise_type, 0, 1)
+
+        self.noise_layout.addWidget(QLabel("SNR (dB):"), 1, 0)
+        self.snr_input = QLineEdit("20.0")
+        self.noise_layout.addWidget(self.snr_input, 1, 1)
+
+        self.noise_layout.addWidget(QLabel("Sample Rate (Hz):"), 2, 0)
+        self.fs_input = QLineEdit("1000")
+        self.noise_layout.addWidget(self.fs_input, 2, 1)
+
+        self.noise_group.setLayout(self.noise_layout)
+
+        # Group 3: Serial Port Configuration
+        self.serial_group = QGroupBox("Serial Communication")
+        self.serial_layout = QGridLayout()
+
+        self.serial_layout.addWidget(QLabel("Available Ports:"), 0, 0)
+        self.port_selector = QComboBox()
+        self.serial_layout.addWidget(self.port_selector, 0, 1)
+
+        self.serial_layout.addWidget(QLabel("Baudrate:"), 1, 0)
+        self.baud_selector = QComboBox()
+        self.baud_selector.addItems(["9600", "115200", "230400", "921600"])
+        self.baud_selector.setCurrentText("115200")
+        self.serial_layout.addWidget(self.baud_selector, 1, 1)
+
+        self.refresh_btn = QPushButton("Refresh Ports")
+        self.refresh_btn.clicked.connect(self.get_available_ports)
+        self.serial_layout.addWidget(self.refresh_btn, 2, 0)
+
+        self.connect_btn = QPushButton("Connect")
+        self.serial_layout.addWidget(self.connect_btn, 2, 1)
+
+        self.serial_group.setLayout(self.serial_layout)
+
+        # Add groups to the horizontal layout
+        self.controls_container.addWidget(self.param_group)
+        self.controls_container.addWidget(self.noise_group)
+        self.controls_container.addWidget(self.serial_group)
+
+        # Action Buttons
+        self.button_layout = QVBoxLayout()
+        self.run_button = QPushButton("START SIMULATION")
+        self.run_button.setMinimumHeight(60)
+        self.run_button.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold;")
+        
+        self.export_button = QPushButton("Export Data (CSV)")
+        self.button_layout.addWidget(self.run_button)
+        self.button_layout.addWidget(self.export_button)
+        
+        self.controls_container.addLayout(self.button_layout)
+        self.main_layout.addLayout(self.controls_container, stretch=1)
+
+        # Initialize Port List
+        self.get_available_ports()
+
+    def get_available_ports(self):
+        """Scans the system for serial ports and populates the dropdown."""
+        self.port_selector.clear()
+        ports = serial.tools.list_ports.comports()
+        
+        if not ports:
+            self.port_selector.addItem("No Ports Found")
+        else:
+            for port in ports:
+                # Displays port name (e.g., COM3 or /dev/ttyUSB0)
+                self.port_selector.addItem(port.device)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    window = SignalSimulator()
+    window.show()
+    sys.exit(app.exec())
