@@ -1,4 +1,5 @@
 import sys
+import time
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QTimer
 import serial
@@ -31,6 +32,7 @@ class SignalController:
         """Links the frontend buttons to controller logic."""
         self.view.run_button.clicked.connect(self.toggle_simulation)
         self.view.connect_btn.clicked.connect(self.toggle_serial)
+        self.view.reset_button.clicked.connect(self.reset_simulation)
         # Note: 'refresh_btn' and 'get_available_ports' are handled 
         # internally by the view as they are UI-specific.
 
@@ -95,6 +97,23 @@ class SignalController:
 
         except ValueError:
             pass # Ignore malformed numeric inputs during typing
+
+    def reset_simulation(self):
+        """Clears the data buffers and the visual plot."""
+        # 1. Clear the internal buffers
+        self.data_buffer = []
+        if hasattr(self, 'time_buffer'):
+            self.time_buffer = []
+    
+        # 2. Reset the engine start time so the wave starts at t=0 again
+        self.engine.start_time = time.time()
+    
+        # 3. Clear the visual plot
+        self.view.curve.setData([], [])
+    
+        # Optional: If you want to stop the simulation on reset
+        if self.timer.isActive():
+            self.toggle_simulation()
 
     def run(self):
         self.view.show()

@@ -105,7 +105,12 @@ class SignalSimulator(QMainWindow):
         self.run_button.setMinimumHeight(60)
         self.run_button.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold;")
         
+        self.reset_button = QPushButton("RESET PLOT")
+        self.reset_button.setMinimumHeight(40)
+        self.reset_button.setStyleSheet("background-color: #424242; color: white;")
+
         self.export_button = QPushButton("Export Data (CSV)")
+        self.button_layout.addWidget(self.reset_button)
         self.button_layout.addWidget(self.run_button)
         self.button_layout.addWidget(self.export_button)
         
