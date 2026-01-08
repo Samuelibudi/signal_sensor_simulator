@@ -99,19 +99,19 @@ class SignalController:
             pass # Ignore malformed numeric inputs during typing
 
     def reset_simulation(self):
-        """Clears the data buffers and the visual plot."""
-        # 1. Clear the internal buffers
+        """Clears the data buffers and resets the simulation step counter."""
+        # 1. Clear the internal data buffers
         self.data_buffer = []
-        if hasattr(self, 'time_buffer'):
-            self.time_buffer = []
-    
-        # 2. Reset the engine start time so the wave starts at t=0 again
-        self.engine.start_time = time.time()
-    
-        # 3. Clear the visual plot
+        self.time_buffer = []
+
+        # 2. Reset the engine's internal step counter to 0
+        # This ensures the math starts at t=0 exactly
+        self.engine.current_step = 0 
+
+        # 3. Clear the visual plot immediately
         self.view.curve.setData([], [])
-    
-        # Optional: If you want to stop the simulation on reset
+
+        # 4. Stop the timer if it's currently running
         if self.timer.isActive():
             self.toggle_simulation()
 

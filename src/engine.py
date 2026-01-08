@@ -3,14 +3,18 @@ import time
 
 class SignalEngine:
     def __init__(self):
-        self.start_time = time.time()
+        self.current_step = 0
 
     def generate_point(self, wave_type, freq, amp, noise_type, snr, fs):
         """
         Generates a single data point based on the current time and parameters.
         """
-        # Calculate elapsed time since start
-        t = time.time() - self.start_time
+        # Calculate t based on the sample index and sample rate
+        # t = index / sampling_frequency
+        t = self.current_step / fs
+        
+        # Increment step for the NEXT point
+        self.current_step += 1
         
         # 1. Generate Raw Signal
         if wave_type == "Sine":
