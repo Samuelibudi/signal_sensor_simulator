@@ -26,14 +26,13 @@ class SignalSimulator(QMainWindow):
         self.plot_widget.setLabel('left', 'Amplitude', units='V')
         self.plot_widget.setLabel('bottom', 'Time', units='s')
         
-        # Placeholder for the signal curve
         self.curve = self.plot_widget.plot(pen=pg.mkPen(color='#00ffcc', width=1.5))
         self.main_layout.addWidget(self.plot_widget, stretch=3)
 
         # --- LOWER HALF: CONTROLS ---
         self.controls_container = QHBoxLayout()
 
-        # Group 1: Signal Parameters (Text Boxes)
+        # Group 1: Signal Parameters
         self.param_group = QGroupBox("Signal Parameters")
         self.param_layout = QGridLayout()
 
@@ -52,7 +51,7 @@ class SignalSimulator(QMainWindow):
         
         self.param_group.setLayout(self.param_layout)
 
-        # Group 2: Noise Settings (Text Boxes)
+        # Group 2: Noise Settings
         self.noise_group = QGroupBox("Noise Profile")
         self.noise_layout = QGridLayout()
 
@@ -71,13 +70,15 @@ class SignalSimulator(QMainWindow):
 
         self.noise_group.setLayout(self.noise_layout)
 
-        # Group 3: Serial Port Configuration
+        # Group 3: Serial Port Configuration (MODIFIED FOR MANUAL TYPING)
         self.serial_group = QGroupBox("Serial Communication")
         self.serial_layout = QGridLayout()
 
-        self.serial_layout.addWidget(QLabel("Available Ports:"), 0, 0)
-        self.port_selector = QComboBox()
-        self.serial_layout.addWidget(self.port_selector, 0, 1)
+        self.serial_layout.addWidget(QLabel("Port Path:"), 0, 0)
+        # CHANGED: Using QLineEdit instead of QComboBox
+        self.port_input = QLineEdit("/dev/pts/") 
+        self.port_input.setPlaceholderText("e.g. /dev/pts/2 or COM3")
+        self.serial_layout.addWidget(self.port_input, 0, 1)
 
         self.serial_layout.addWidget(QLabel("Baudrate:"), 1, 0)
         self.baud_selector = QComboBox()
@@ -85,16 +86,17 @@ class SignalSimulator(QMainWindow):
         self.baud_selector.setCurrentText("115200")
         self.serial_layout.addWidget(self.baud_selector, 1, 1)
 
-        self.refresh_btn = QPushButton("Refresh Ports")
-        self.refresh_btn.clicked.connect(self.get_available_ports)
-        self.serial_layout.addWidget(self.refresh_btn, 2, 0)
+        # Added a status label for connection feedback
+        self.status_label = QLabel("Status: Disconnected")
+        self.status_label.setStyleSheet("color: #aaaaaa; font-style: italic;")
+        self.serial_layout.addWidget(self.status_label, 2, 0, 1, 2)
 
         self.connect_btn = QPushButton("Connect")
-        self.serial_layout.addWidget(self.connect_btn, 2, 1)
+        self.serial_layout.addWidget(self.connect_btn, 3, 0, 1, 2)
 
         self.serial_group.setLayout(self.serial_layout)
 
-        # Add groups to the horizontal layout
+        # Add groups to layout
         self.controls_container.addWidget(self.param_group)
         self.controls_container.addWidget(self.noise_group)
         self.controls_container.addWidget(self.serial_group)
@@ -117,21 +119,6 @@ class SignalSimulator(QMainWindow):
         self.controls_container.addLayout(self.button_layout)
         self.main_layout.addLayout(self.controls_container, stretch=1)
 
-        # Initialize Port List
-        self.get_available_ports()
-
-    def get_available_ports(self):
-        """Scans the system for serial ports and populates the dropdown."""
-        self.port_selector.clear()
-        ports = serial.tools.list_ports.comports()
-        
-        if not ports:
-            self.port_selector.addItem("No Ports Found")
-        else:
-            for port in ports:
-                # Displays port name (e.g., COM3 or /dev/ttyUSB0)
-                self.port_selector.addItem(port.device)
-
 class FourierDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -139,7 +126,7 @@ class FourierDialog(QDialog):
         layout = QFormLayout(self)
 
         self.a_input = QLineEdit("0, 0, 0")
-        self.b_input = QLineEdit("1, 0.33, 0.2") # Default to a rough square start
+        self.b_input = QLineEdit("1, 0.33, 0.2") 
         
         layout.addRow("a_k (Cosines, comma separated):", self.a_input)
         layout.addRow("b_k (Sines, comma separated):", self.b_input)
@@ -150,7 +137,6 @@ class FourierDialog(QDialog):
         layout.addRow(self.buttons)
 
     def get_coeffs(self):
-        # Convert strings to lists of floats
         a = [float(x.strip()) for x in self.a_input.text().split(",")]
         b = [float(x.strip()) for x in self.b_input.text().split(",")]
         return a, b
