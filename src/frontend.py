@@ -3,7 +3,7 @@ import serial
 import serial.tools.list_ports
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QGridLayout, QGroupBox, QLineEdit, 
-                             QLabel, QComboBox, QPushButton)
+                             QLabel, QComboBox, QPushButton, QDialog, QFormLayout, QDialogButtonBox)
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 
@@ -39,7 +39,7 @@ class SignalSimulator(QMainWindow):
 
         self.param_layout.addWidget(QLabel("Waveform:"), 0, 0)
         self.wave_type = QComboBox()
-        self.wave_type.addItems(["Sine", "Square", "Sawtooth", "Triangle"])
+        self.wave_type.addItems(["Sine", "Square", "Sawtooth", "Triangle","Custom"])
         self.param_layout.addWidget(self.wave_type, 0, 1)
 
         self.param_layout.addWidget(QLabel("Frequency (Hz):"), 1, 0)
@@ -131,6 +131,29 @@ class SignalSimulator(QMainWindow):
             for port in ports:
                 # Displays port name (e.g., COM3 or /dev/ttyUSB0)
                 self.port_selector.addItem(port.device)
+
+class FourierDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Fourier Coefficients")
+        layout = QFormLayout(self)
+
+        self.a_input = QLineEdit("0, 0, 0")
+        self.b_input = QLineEdit("1, 0.33, 0.2") # Default to a rough square start
+        
+        layout.addRow("a_k (Cosines, comma separated):", self.a_input)
+        layout.addRow("b_k (Sines, comma separated):", self.b_input)
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        layout.addRow(self.buttons)
+
+    def get_coeffs(self):
+        # Convert strings to lists of floats
+        a = [float(x.strip()) for x in self.a_input.text().split(",")]
+        b = [float(x.strip()) for x in self.b_input.text().split(",")]
+        return a, b
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import zip_longest
 import time
 
 class SignalEngine:
@@ -34,6 +35,19 @@ class SignalEngine:
             signal = self._apply_noise(signal, amp, noise_type, snr)
 
         return t, signal
+    
+    def generate_fourier_point(self, f0, amplitude, a_coeffs, b_coeffs, fs):
+        """The missing method: Generates a point using Fourier series."""
+        t = self.current_step / fs
+        self.current_step += 1
+        
+        val = 0
+        # Summing harmonics: ak*cos + bk*sin
+        for k, (ak, bk) in enumerate(zip_longest(a_coeffs, b_coeffs, fillvalue=0), start=1):
+            theta = 2 * np.pi * k * f0 * t
+            val += ak * np.cos(theta) + bk * np.sin(theta)
+            
+        return t, val * amplitude
 
     def _apply_noise(self, signal, amplitude, noise_type, snr_db):
         """
