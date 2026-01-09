@@ -1,0 +1,10 @@
+# Core GUI and Plotting
+PyQt6==6.6.1
+pyqtgraph==0.13.3
+
+# Numerical Processing
+numpy==1.26.3
+
+# Hardware Simulation
+pyserial==3.5
+
